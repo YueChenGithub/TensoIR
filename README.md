@@ -104,6 +104,8 @@ The result will be stored in `--basedir` defined in the config file.
 
 ```bash
 export PYTHONPATH=. && python scripts/relight_importance.py --ckpt "$ckpt_path" --config configs/relighting_test/"$scene".txt --batch_size 800
+export PYTHONPATH=. && python scripts/relight_nerfactor.py --ckpt "$ckpt_path" --config configs/nerfactor_relighting/"$scene".txt --batch_size 800
+
 ```
 
 We do light intensity importance sampling for relighting. The sampling results are stored in `--geo_buffer_path` defined in the config file.

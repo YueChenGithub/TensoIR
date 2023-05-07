@@ -13,7 +13,8 @@ from dataLoader.ray_utils import *
 from models.relight_utils import read_hdr
 import torch.nn as nn
 
-class TensoIR_Dataset_unknown_rotated_lights(Dataset):
+
+class TensoIR_Dataset_nerfactor(Dataset):
     def __init__(self,
                  root_dir,
                  hdr_dir,
@@ -41,15 +42,15 @@ class TensoIR_Dataset_unknown_rotated_lights(Dataset):
         self.split = split
         self.split_list = [x for x in self.root_dir.iterdir() if x.stem.startswith(self.split)]
         if not random_test:
-            self.split_list.sort() # to render video
+            self.split_list.sort()  # to render video
         if sub > 0:
             self.split_list = self.split_list[:sub]
-        self.img_wh = (int(800 / downsample), int(800 / downsample))
+        self.img_wh = (int(512 / downsample), int(512 / downsample))
         self.white_bg = True
         self.downsample = downsample
         self.transform = self.define_transforms()
         self.light_name = light_name
-        self.near_far = [2.0, 6.0]  
+        self.near_far = [2.0, 6.0]
         self.scene_bbox = torch.tensor([[-1.5, -1.5, -1.5], [1.5, 1.5, 1.5]]) * self.downsample
         self.center = torch.mean(self.scene_bbox, axis=0).float().view(1, 1, 3)
         self.radius = (self.scene_bbox[1] - self.center).float().view(1, 1, 3)
@@ -66,7 +67,8 @@ class TensoIR_Dataset_unknown_rotated_lights(Dataset):
 
         # when trainning, we will load all the rays and rgbs
         if split == 'train':
-            self.read_all_frames()        
+            self.read_all_frames()
+
     def define_transforms(self):
         transforms = T.Compose([
             T.ToTensor(),
@@ -92,7 +94,8 @@ class TensoIR_Dataset_unknown_rotated_lights(Dataset):
         self.all_rgbs = []
         self.all_masks = []
         self.all_light_idx = []
-        for idx in tqdm(range(self.__len__()), desc=f'Loading {self.split} data, view number: {self.__len__()}, rotaion number: {self.light_num}'):
+        for idx in tqdm(range(self.__len__()),
+                        desc=f'Loading {self.split} data, view number: {self.__len__()}, rotaion number: {self.light_num}'):
             item_path = self.split_list[idx]
             item_meta_path = item_path / 'metadata.json'
             with open(item_meta_path, 'r') as f:
@@ -117,10 +120,9 @@ class TensoIR_Dataset_unknown_rotated_lights(Dataset):
 
                 # Read RGB data
                 light_rotation = self.light_rotation[light_rotation_idx]
-                if self.light_name in ['3072', '2188', '2163']:
-                    relight_img_path = item_path / f'rgba.png'  # fit for nerfactor
-                else:
-                    relight_img_path = item_path / f'rgba_{self.light_name}_{light_rotation}.png'
+
+                relight_img_path = item_path / f'rgba.png'  # fit for nerfactor
+
                 relight_img = Image.open(relight_img_path)
                 if self.downsample != 1.0:
                     relight_img = relight_img.resize(img_wh, Image.Resampling.LANCZOS)
@@ -130,7 +132,8 @@ class TensoIR_Dataset_unknown_rotated_lights(Dataset):
                 relight_rgbs = relight_img[:, :3] * relight_img[:, -1:] + (1 - relight_img[:, -1:])  # [H*W, 3]
                 ## Obtain background mask, bg = False
                 # relight_mask = (~(relight_img[:, -1:] == 0)).to(torch.bool)  # [H*W, 1]
-                light_idx = torch.tensor(light_rotation_idx, dtype=torch.int8).repeat((img_wh[0] * img_wh[1], 1)).to(torch.int8) # [H*W, 1], transform to in8 to save memory
+                light_idx = torch.tensor(light_rotation_idx, dtype=torch.int8).repeat((img_wh[0] * img_wh[1], 1)).to(
+                    torch.int8)  # [H*W, 1], transform to in8 to save memory
 
                 self.all_rays.append(rays)
                 self.all_rgbs.append(relight_rgbs)
@@ -141,9 +144,6 @@ class TensoIR_Dataset_unknown_rotated_lights(Dataset):
         self.all_rgbs = torch.cat(self.all_rgbs, dim=0)  # [N*H*W, 3]
         # self.all_masks = torch.cat(self.all_masks, dim=0)  # [N*H*W, 1]
         self.all_light_idx = torch.cat(self.all_light_idx, dim=0)  # [N*H*W, 1]
-
-
-
 
     def world2ndc(self, points, lindisp=None):
         device = points.device
@@ -181,16 +181,14 @@ class TensoIR_Dataset_unknown_rotated_lights(Dataset):
         c2w = torch.FloatTensor(pose)  # [4, 4]
         w2c = torch.linalg.inv(c2w)  # [4, 4]
 
-
         relight_rgbs_list = []
         light_idx_list = []
         for light_rotation_idx in range(len(self.light_rotation)):
             # Read RGB data
             light_rotation = self.light_rotation[light_rotation_idx]
-            if self.light_name in ['3072', '2188', '2163']:
-                relight_img_path = item_path / f'rgba.png'  # fit for nerfactor
-            else:
-                relight_img_path = item_path / f'rgba_{self.light_name}_{light_rotation}.png'
+
+            relight_img_path = item_path / f'rgba.png'  # fit for nerfactor
+
             relight_img = Image.open(relight_img_path)
             if self.downsample != 1.0:
                 relight_img = relight_img.resize(img_wh, Image.Resampling.LANCZOS)
@@ -198,13 +196,13 @@ class TensoIR_Dataset_unknown_rotated_lights(Dataset):
             relight_img = relight_img.view(4, -1).permute(1, 0)  # [H*W, 4]
             ## Blend A to RGB
             relight_rgbs = relight_img[:, :3] * relight_img[:, -1:] + (1 - relight_img[:, -1:])  # [H*W, 3]
-            light_idx = torch.tensor(light_rotation_idx, dtype=torch.int).repeat((img_wh[0] * img_wh[1], 1)) # [H*W, 1]
+            light_idx = torch.tensor(light_rotation_idx, dtype=torch.int).repeat((img_wh[0] * img_wh[1], 1))  # [H*W, 1]
 
             relight_rgbs_list.append(relight_rgbs)
             light_idx_list.append(light_idx)
-        
-        relight_rgbs = torch.stack(relight_rgbs_list, dim=0)    # [rotation_num, H*W, 3]
-        light_idx = torch.stack(light_idx_list, dim=0)          # [rotation_num, H*W, 1]
+
+        relight_rgbs = torch.stack(relight_rgbs_list, dim=0)  # [rotation_num, H*W, 3]
+        light_idx = torch.stack(light_idx_list, dim=0)  # [rotation_num, H*W, 1]
         ## Obtain background mask, bg = False
         relight_mask = ~(relight_img[:, -1:] == 0)
 
@@ -234,11 +232,10 @@ class TensoIR_Dataset_unknown_rotated_lights(Dataset):
         ## Downsample
         if self.downsample != 1.0:
             normal = cv2.resize(normal, img_wh[::-1], interpolation=cv2.INTER_NEAREST)
-   
+
         normal = torch.FloatTensor(normal)  # [H, W, 3]
         normal = normal / torch.norm(normal, dim=-1, keepdim=True)
         normals = normal.view(-1, 3)  # [H*W, 3]
-
 
         item = {
             'img_wh': img_wh,  # (int, int)
@@ -271,7 +268,9 @@ if __name__ == "__main__":
     item = dataset.__getitem__(0)
     print(item['albedo'].shape)
     print(item['rgbs_mask'].shape)
-    import ipdb; ipdb.set_trace()
+    import ipdb;
+
+    ipdb.set_trace()
     # Test 2: Iteration
     # train_dataloader = torch.utils.data.DataLoader(dataset, batch_size=1, num_workers=1, drop_last=True, shuffle=True)
     # train_iter = iter(train_dataloader)

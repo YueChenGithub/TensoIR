@@ -20,7 +20,15 @@ def export_mesh(args):
     tensorf = eval(args.model_name)(**kwargs)
     tensorf.load(ckpt)
 
-    alpha, _ = tensorf.getDenseAlpha()
+    gridSize = tensorf.gridSize
+    print('gridSize: ', gridSize)
+    # new_gridSize = torch.tensor([500,500,500], device='cuda')
+    new_gridSize = (gridSize*1.5).int()
+    print('new_gridSize: ', new_gridSize)
+    alpha, _ = tensorf.getDenseAlpha(gridSize=new_gridSize)
+
+    # alpha, _ = tensorf.getDenseAlpha()
+
     convert_sdf_samples_to_ply(alpha.cpu(), f'{args.ckpt[:-3]}.ply', bbox=tensorf.aabb.cpu(), level=0.005)
     
 

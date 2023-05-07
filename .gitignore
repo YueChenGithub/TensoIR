@@ -1,0 +1,7 @@
+
+data/
+log/
+relighting
+__pycache__/
+
+*.pyc

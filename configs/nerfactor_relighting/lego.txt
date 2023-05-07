@@ -1,15 +1,15 @@
-dataset_name = tensoIR_relighting_test
-datadir = ./data/TensoIR_Synthetic/armadillo
-hdrdir = ./data/Environment_Maps/high_res_envmaps_1k
-expname = armadillo_relighting
+dataset_name = nerfactor_relighting
+datadir = ./data/nerfactor/lego_3072
+hdrdir = ./data/Environment_Maps/nerfactor
+expname = lego
 basedir = ./log/log_relighting_test
 add_timestamp = 1
 downsample_train = 1
 downsample_test = 1
-geo_buffer_path = ./relighting/armadillo
+geo_buffer_path = ./relighting/lego
 
 n_iters = 80000
-batch_size = 2048  # original 4096
+batch_size = 1536  # original 4096
 lr_decay_iters = 80000
 
 N_voxel_init = 2097152 # 128**3
@@ -53,7 +53,7 @@ normals_kind = derived_plus_predicted
 
 normals_diff_weight = 0.0001
 normals_orientation_weight = 0.001
-batch_size_test = 4096
+batch_size_test = 1536  # 4096
 
 light_name = sunset
 albedo_smoothness_loss_weight = 0.0001

@@ -8,7 +8,7 @@ downsample_train = 1
 downsample_test = 1
 
 n_iters = 80000
-batch_size = 4096
+batch_size = 2048  # original 4096
 lr_decay_iters = 80000
 
 N_voxel_init = 2097152 # 128**3
@@ -51,7 +51,7 @@ normals_diff_weight = 0.0005    # try different values on your own data if it do
 normals_orientation_weight = 0.001
 rgb_brdf_weight = 0.2
 
-batch_size_test = 4096
+batch_size_test = 4096  # original 4096
 
 light_name = sunset
 albedo_smoothness_loss_weight = 0.001

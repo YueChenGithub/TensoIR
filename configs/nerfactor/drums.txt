@@ -1,12 +1,11 @@
-dataset_name = tensoIR_relighting_test
-datadir = ./data/TensoIR_Synthetic/armadillo
-hdrdir = ./data/Environment_Maps/high_res_envmaps_1k
-expname = armadillo_relighting
-basedir = ./log/log_relighting_test
+dataset_name = nerfactor
+datadir = ./data/nerfactor/drums_3072
+hdrdir = ./data/Environment_Maps/nerfactor
+expname = drums
+basedir = ./log/log_single_light
 add_timestamp = 1
 downsample_train = 1
 downsample_test = 1
-geo_buffer_path = ./relighting/armadillo
 
 n_iters = 80000
 batch_size = 2048  # original 4096
@@ -19,6 +18,9 @@ N_voxel_final = 27000000 # 300**3
 upsamp_list = [10000, 20000, 30000, 40000]
 update_AlphaMask_list = [10000, 15000, 20000, 25000, 30000, 35000]
 
+
+N_vis = 5
+vis_every = 80000
 
 
 render_test = 1
@@ -36,14 +38,7 @@ fea_pe = 2
 pos_pe = 2
 
 
-
-L1_weight_inital = 8e-5
-L1_weight_rest = 4e-5
-rm_weight_mask_thre = 1e-4
-
-
-light_rotation = [000, 120, 240]
-
+light_rotation = [000]
 
 light_sample_train = stratified_sampling
 light_kind = sg
@@ -51,14 +46,22 @@ numLgtSGs = 128
  
 normals_kind = derived_plus_predicted
 
-normals_diff_weight = 0.0001
+
+normals_diff_weight = 0.0005    # try different values on your own data if it does not work well
 normals_orientation_weight = 0.001
-batch_size_test = 4096
+rgb_brdf_weight = 0.2
 
-light_name = sunset
-albedo_smoothness_loss_weight = 0.0001
-roughness_smoothness_loss_weight = 0.0002
+batch_size_test = 2048 
+
+light_name = 3072
+albedo_smoothness_loss_weight = 0.001
+roughness_smoothness_loss_weight = 0.001
 
 
+L1_weight_inital = 8e-5
+L1_weight_rest = 4e-5
+rm_weight_mask_thre = 1e-4
 
- 
+TV_weight_density = 0.05
+TV_weight_app = 0.005
+
