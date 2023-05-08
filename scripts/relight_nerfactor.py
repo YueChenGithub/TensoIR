@@ -367,7 +367,7 @@ if __name__ == "__main__":
     dataset = dataset_dict[args.dataset_name]
 
     # names of the environment maps used for relighting
-    light_name_list= ['interior', 'studio', 'sunset']
+    light_name_list= ['city', 'courtyard', 'forest', 'interior', 'night', 'studio', 'sunrise', 'sunset']
 
 
 
